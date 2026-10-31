@@ -67,7 +67,8 @@ export function createDefaultInvoice(): InvoiceFormState {
     invoice: {
       invoiceNumber: "",
       invoiceDate: "",
-      program: "",
+      packageCategory: "",
+      packageName: "",
       startDate: "",
       expiryDate: "",
     },

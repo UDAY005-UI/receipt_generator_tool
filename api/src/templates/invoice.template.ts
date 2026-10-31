@@ -1,4 +1,6 @@
+import { PACKAGE_CATEGORY_LABELS } from "../types/invoice";
 import type { InvoiceRenderData } from "../types/invoice";
+import { getLogoDataUri } from "../utils/assets";
 
 const escapeHtml = (value: string): string =>
   value
@@ -50,6 +52,11 @@ const partyBlock = (
 export function renderInvoiceHtml(data: InvoiceRenderData): string {
   const { customer, business, invoice, financial, terms } = data;
 
+  const logo = getLogoDataUri();
+  const watermarkHtml = logo
+    ? `<img class="watermark" src="${logo}" alt="" />`
+    : "";
+
   const termsHtml = terms
     .map(
       (section, index) => `
@@ -61,6 +68,7 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
     .join("");
 
   const dueClass = financial.dueAmount > 0 ? "due-pending" : "due-clear";
+  const categoryLabel = PACKAGE_CATEGORY_LABELS[invoice.packageCategory];
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -83,10 +91,25 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
       print-color-adjust: exact;
     }
 
-    /* Fixed A4 content box: 210mm x 297mm with 14mm margins */
+    /* Centered, faded logo. Fixed = centered on every printed page. */
+    .watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 168mm;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: 0.07;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Content box: 210mm wide, 12mm top/bottom and 14mm side padding */
     #page {
+      position: relative;
+      z-index: 1;
       width: 210mm;
-      padding: 14mm;
+      padding: 12mm 14mm;
       overflow: hidden;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -98,7 +121,7 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
       align-items: flex-end;
       border-bottom: 2.5px solid #111827;
       padding-bottom: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .header .title {
       font-size: 22pt;
@@ -115,7 +138,7 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
     .parties {
       display: flex;
       gap: 12mm;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .party { flex: 1; }
     .party-title {
@@ -135,7 +158,8 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
     table.info {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
+      table-layout: fixed;
+      margin-bottom: 16px;
     }
     table.info th {
       background: #111827;
@@ -150,10 +174,21 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
       border-bottom: 1px solid #d1d5db;
       padding: 8px;
       font-size: 10pt;
+      vertical-align: top;
+      word-break: break-word;
     }
     table.info th.num, table.info td.num { text-align: right; }
+    .pkg-cat {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+    .pkg-name { font-weight: 600; }
 
-    .summary-wrap { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+    .summary-wrap { display: flex; justify-content: flex-end; margin-bottom: 18px; }
     table.summary { width: 82mm; border-collapse: collapse; }
     table.summary td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; }
     table.summary td.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -161,7 +196,7 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
     table.summary tr.due td {
       font-weight: 800;
       font-size: 11pt;
-      background: #f3f4f6;
+      background: rgba(243, 244, 246, 0.7);
       border-bottom: 2px solid #111827;
     }
     .due-pending { color: #b91c1c; }
@@ -173,23 +208,29 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
       text-transform: uppercase;
       letter-spacing: 1.5px;
       border-bottom: 1.5px solid #111827;
-      padding-bottom: 3px;
-      margin-bottom: 8px;
-    }
-    .terms {
-      column-count: 2;
-      column-gap: 10mm;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
     }
     .term {
       break-inside: avoid;
       page-break-inside: avoid;
-      margin-bottom: 7px;
+      margin-bottom: 14px;
     }
-    .term-heading { font-weight: 700; font-size: 9pt; margin-bottom: 1px; }
-    .term-body { font-size: 8pt; color: #4b5563; line-height: 1.35; }
+    .term-heading {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+    .term-body {
+      font-size: 8.5pt;
+      color: #4b5563;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
+  ${watermarkHtml}
   <div id="page">
     <div class="header">
       <div class="title">INVOICE</div>
@@ -213,10 +254,17 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
     </div>
 
     <table class="info">
+      <colgroup>
+        <col style="width: 17%" />
+        <col style="width: 33%" />
+        <col style="width: 17%" />
+        <col style="width: 17%" />
+        <col style="width: 16%" />
+      </colgroup>
       <thead>
         <tr>
           <th>Invoice Date</th>
-          <th>Program</th>
+          <th>Package</th>
           <th>Start Date</th>
           <th>Expiry Date</th>
           <th class="num">Amount</th>
@@ -225,7 +273,10 @@ export function renderInvoiceHtml(data: InvoiceRenderData): string {
       <tbody>
         <tr>
           <td>${formatDate(invoice.invoiceDate)}</td>
-          <td>${escapeHtml(invoice.program)}</td>
+          <td>
+            <div class="pkg-cat">${escapeHtml(categoryLabel)}</div>
+            <div class="pkg-name">${escapeHtml(invoice.packageName)}</div>
+          </td>
           <td>${formatDate(invoice.startDate)}</td>
           <td>${formatDate(invoice.expiryDate)}</td>
           <td class="num">${formatMoney(financial.amount)}</td>

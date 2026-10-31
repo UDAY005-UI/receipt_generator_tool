@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PACKAGE_CATEGORIES } from "../types/invoice";
 import type { FinancialInput, FinancialSummary } from "../types/invoice";
 
 const isoDate = z
@@ -23,7 +24,7 @@ const phone = z
   .regex(/^[0-9+()\-\s]+$/, "Phone can only contain digits, spaces, +, -, ( )");
 
 const money = z
-  .number({ invalid_type_error: "Must be a number" } as never)
+  .number({ invalid_type_error: "Must be a number" })
   .finite("Must be a valid number")
   .min(0, "Cannot be negative");
 
@@ -57,11 +58,14 @@ export const invoiceSchema = z
           .min(1, "Invoice number is required")
           .max(30, "Invoice number is too long"),
         invoiceDate: isoDate,
-        program: z
+        packageCategory: z.enum(PACKAGE_CATEGORIES, {
+          errorMap: () => ({ message: "Select a package category" }),
+        }),
+        packageName: z
           .string()
           .trim()
-          .min(1, "Program/package is required")
-          .max(60, "Program/package is too long"),
+          .min(1, "Package name is required")
+          .max(60, "Package name is too long"),
         startDate: isoDate,
         expiryDate: isoDate,
       })

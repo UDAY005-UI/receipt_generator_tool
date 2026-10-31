@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import pdfRoutes from "./routes/pdf.routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import { preloadLogo } from "./utils/assets";
 import { startKeepAlive } from "./utils/keepAlive";
 
 const app = express();
@@ -35,5 +36,6 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Antariksha PDF backend running on http://localhost:${PORT}`);
   console.log(`Accepting requests from ${FRONTEND_ORIGIN}`);
+  void preloadLogo();
   startKeepAlive();
 });

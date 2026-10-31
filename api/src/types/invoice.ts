@@ -1,3 +1,17 @@
+export const PACKAGE_CATEGORIES = [
+  "one-time-content",
+  "monthly-content",
+  "website",
+] as const;
+
+export type PackageCategory = (typeof PACKAGE_CATEGORIES)[number];
+
+export const PACKAGE_CATEGORY_LABELS: Record<PackageCategory, string> = {
+  "one-time-content": "One-time Content Package",
+  "monthly-content": "Monthly Content Package",
+  website: "Website Package",
+};
+
 export interface PartyDetails {
   name: string;
   address: string;
@@ -14,7 +28,8 @@ export type BusinessDetails = PartyDetails;
 export interface InvoiceInfo {
   invoiceNumber: string;
   invoiceDate: string; // YYYY-MM-DD
-  program: string;
+  packageCategory: PackageCategory;
+  packageName: string;
   startDate: string; // YYYY-MM-DD
   expiryDate: string; // YYYY-MM-DD
 }

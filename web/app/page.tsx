@@ -7,9 +7,14 @@ import CustomerDetails from "@/components/CustomerDetails";
 import FinancialDetails from "@/components/FinancialDetails";
 import GenerateButton from "@/components/GenerateButton";
 import InvoiceDetails from "@/components/InvoiceDetails";
+import PackageDetails from "@/components/PackageDetails";
 import TermsConditions from "@/components/TermsConditions";
-import { createDefaultInvoice } from "@/lib/defaults"
-import { buildPayload, validateInvoice } from "@/lib/invoiceUtils"
+import { createDefaultInvoice } from "@/lib/defaults";
+import {
+  generateInvoiceNumber,
+  rememberInvoiceNumber,
+} from "@/lib/invoiceNumber";
+import { buildPayload, validateInvoice } from "@/lib/invoiceUtils";
 import { PdfRequestError, generatePdf } from "@/services/pdfService";
 import type { FormErrors, InvoiceFormState } from "@/types/invoice";
 
@@ -74,7 +79,14 @@ export default function HomePage() {
     clearPdf();
     setApiError(null);
 
-    const validationErrors = validateInvoice(form);
+    // A brand-new 5-digit invoice number for every generation.
+    const invoiceNumber = generateInvoiceNumber();
+    const nextForm: InvoiceFormState = {
+      ...form,
+      invoice: { ...form.invoice, invoiceNumber },
+    };
+
+    const validationErrors = validateInvoice(nextForm);
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
@@ -83,14 +95,16 @@ export default function HomePage() {
       return;
     }
 
+    rememberInvoiceNumber(invoiceNumber);
+    setForm(nextForm);
     setIsGenerating(true);
 
     try {
-      const blob = await generatePdf(buildPayload(form));
+      const blob = await generatePdf(buildPayload(nextForm));
       const url = URL.createObjectURL(blob);
       urlRef.current = url;
       setDownloadUrl(url);
-      setDownloadFilename(toFilename(form.invoice.invoiceNumber));
+      setDownloadFilename(toFilename(invoiceNumber));
     } catch (error) {
       if (error instanceof PdfRequestError) {
         setApiError(error.message);
@@ -137,6 +151,16 @@ export default function HomePage() {
           value={form.invoice}
           errors={errors}
           onChange={(value) => update("invoice", value)}
+        />
+
+        <PackageDetails
+          invoice={form.invoice}
+          amount={form.financial.amount}
+          errors={errors}
+          onInvoiceChange={(value) => update("invoice", value)}
+          onAmountChange={(value) =>
+            update("financial", { ...form.financial, amount: value })
+          }
         />
 
         <FinancialDetails

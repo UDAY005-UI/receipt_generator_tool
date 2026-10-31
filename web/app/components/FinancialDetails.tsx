@@ -66,19 +66,9 @@ export default function FinancialDetails({
   return (
     <SectionCard
       title="Financial Details"
-      description="Subtotal, final amount and due amount are calculated automatically."
+      description="Amount comes from the package above. Subtotal, final amount and due amount are calculated automatically."
     >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <TextField
-          id="financial-amount"
-          label="Amount"
-          required
-          inputMode="decimal"
-          value={value.amount}
-          onChange={(v) => set("amount", v)}
-          error={errors["financial.amount"]}
-          placeholder="e.g. 3000"
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
         <TextField
           id="financial-discount"
           label="Discount"
@@ -101,7 +91,8 @@ export default function FinancialDetails({
         />
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        <ReadOnlyRow label="Amount (package)" amount={summary.amount} />
         <ReadOnlyRow label="Subtotal" amount={summary.subtotal} />
         <ReadOnlyRow label="Final amount" amount={summary.finalAmount} />
         <ReadOnlyRow

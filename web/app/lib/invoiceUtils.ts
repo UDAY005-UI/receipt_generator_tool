@@ -1,3 +1,4 @@
+import { PACKAGE_CATEGORIES } from "@/types/invoice";
 import type {
   FinancialFormState,
   FinancialSummary,
@@ -107,7 +108,6 @@ export function validateInvoice(form: InvoiceFormState): FormErrors {
 
   // ----- Invoice info -----
   checkRequired(errors, "invoice.invoiceNumber", form.invoice.invoiceNumber, "Invoice number", 30);
-  checkRequired(errors, "invoice.program", form.invoice.program, "Program/package", 60);
 
   if (!isValidDate(form.invoice.invoiceDate)) {
     errors["invoice.invoiceDate"] = "Invoice date is required";
@@ -124,10 +124,20 @@ export function validateInvoice(form: InvoiceFormState): FormErrors {
     errors["invoice.expiryDate"] = "Expiry date cannot be before start date";
   }
 
+  // ----- Package -----
+  if (
+    !(PACKAGE_CATEGORIES as readonly string[]).includes(
+      form.invoice.packageCategory
+    )
+  ) {
+    errors["invoice.packageCategory"] = "Select a package category";
+  }
+  checkRequired(errors, "invoice.packageName", form.invoice.packageName, "Package name", 60);
+
   // ----- Financial -----
   const amount = parseMoney(form.financial.amount);
   if (!Number.isFinite(amount)) {
-    errors["financial.amount"] = "Enter a valid amount (e.g. 3000 or 2499.50)";
+    errors["financial.amount"] = "Enter a valid package amount (e.g. 3000 or 2499.50)";
   }
 
   const discountRaw = form.financial.discount.trim();
@@ -144,7 +154,7 @@ export function validateInvoice(form: InvoiceFormState): FormErrors {
 
   if (Number.isFinite(amount) && Number.isFinite(discount)) {
     if (discount > amount) {
-      errors["financial.discount"] = "Discount cannot exceed the amount";
+      errors["financial.discount"] = "Discount cannot exceed the package amount";
     } else if (Number.isFinite(paid) && paid > round2(amount - discount)) {
       errors["financial.paidAmount"] = "Paid amount cannot exceed the final amount";
     }
